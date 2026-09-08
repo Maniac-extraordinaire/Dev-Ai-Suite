@@ -4,14 +4,27 @@ from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from engines.numerical_engine import process_traffic_data
 from engines.audio_engine import process_voice_bug_report
 from engines.text_engine import optimize_code_snippet
 from engines.image_engine import process_image_input
 
-app = FastAPI(title="DevAI Suite API",
-              description="Production API for DevAI Suite")
+app = FastAPI(
+    title="DevAI Suite API",
+    description="Production API for DevAI Suite"
+)
+
+# 2. Add CORS middleware right here to allow browser requests and OPTIONS headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all frontend origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, OPTIONS, etc.)
+    # Allows custom headers like ngrok-skip-browser-warning
+    allow_headers=["*"],
+)
 
 TEMP_DIR = Path("temp_uploads")
 TEMP_DIR.mkdir(exist_ok=True)

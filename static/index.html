@@ -115,31 +115,30 @@
     </div>
 
     <script>
+        const API_BASE_URL = "https://unrobed-sedation-produce.ngrok-free.dev";
+
         function switchTab(tabName, btnElement) {
-        // 1. Hide all sections and remove active class from buttons
-        document.querySelectorAll('.section').forEach(function(s) {
-            s.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        
-        // 2. PASTE IT HERE: Activate the correct section based on the clicked tab
-        if (tabName === 'traffic') {
-            document.getElementById('traffic-section').classList.add('active');
-        } else if (tabName === 'audio') {
-            document.getElementById('audio-section').classList.add('active');
-        } else if (tabName === 'text') {
-            document.getElementById('text-section').classList.add('active');
-        } else if (tabName === 'vision') {
-            document.getElementById('vision-section').classList.add('active');
+            document.querySelectorAll('.section').forEach(function(s) {
+                s.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            
+            if (tabName === 'traffic') {
+                document.getElementById('traffic-section').classList.add('active');
+            } else if (tabName === 'audio') {
+                document.getElementById('audio-section').classList.add('active');
+            } else if (tabName === 'text') {
+                document.getElementById('text-section').classList.add('active');
+            } else if (tabName === 'vision') {
+                document.getElementById('vision-section').classList.add('active');
+            }
+            
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
         }
-        
-        // 3. Highlight the clicked tab button
-        if (btnElement) {
-            btnElement.classList.add('active');
-        }
-    }
 
         function toggleTrafficInput() {
             var val = document.getElementById('trafficSource').value;
@@ -159,7 +158,11 @@
             }
 
             try {
-                var res = await fetch('/api/predict-traffic', { method: 'POST', body: formData });
+                var res = await fetch(`${API_BASE_URL}/api/predict-traffic`, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { "ngrok-skip-browser-warning": "true" }
+                });
                 var data = await res.json();
                 output.innerText = JSON.stringify(data, null, 2);
             } catch (err) {
@@ -188,7 +191,11 @@
                         var formData = new FormData();
                         formData.append("file", blob, "voice_bug.wav");
                         
-                        var res = await fetch('/api/triage-bug', { method: 'POST', body: formData });
+                        var res = await fetch(`${API_BASE_URL}/api/triage-bug`, { 
+                            method: 'POST', 
+                            body: formData,
+                            headers: { "ngrok-skip-browser-warning": "true" }
+                        });
                         var data = await res.json();
                         output.innerText = JSON.stringify(data, null, 2);
                         status.innerText = "Complete!";
@@ -219,7 +226,11 @@
             formData.append("file", fileInput.files[0]);
 
             try {
-                var res = await fetch('/api/triage-bug', { method: 'POST', body: formData });
+                var res = await fetch(`${API_BASE_URL}/api/triage-bug`, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { "ngrok-skip-browser-warning": "true" }
+                });
                 var data = await res.json();
                 output.innerText = JSON.stringify(data, null, 2);
             } catch (err) {
@@ -237,7 +248,11 @@
             formData.append("prompt", prompt);
 
             try {
-                var res = await fetch('/api/optimize-code', { method: 'POST', body: formData });
+                var res = await fetch(`${API_BASE_URL}/api/optimize-code`, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { "ngrok-skip-browser-warning": "true" }
+                });
                 var data = await res.json();
                 
                 if (data.optimized_output) {
@@ -264,30 +279,29 @@
                 return; 
             }
             
-            output.innerText = "Processing image through Vision & OCR engine (this may take a minute on CPU)...";
+            output.innerText = "Processing image through Vision & OCR engine (GPU accelerated)...";
             var formData = new FormData();
             formData.append("file", fileInput.files[0]);
             formData.append("query", queryInput || "Analyze this image.");
 
             try {
-                var res = await fetch('/api/process-image', { method: 'POST', body: formData });
+                var res = await fetch(`${API_BASE_URL}/api/process-image`, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { "ngrok-skip-browser-warning": "true" }
+                });
                 var data = await res.json();
                 
                 if (data.status === "success") {
                     let formattedOutput = `[Routed To: ${data.routed_to} | Mode: ${data.interaction_type}]\n\n`;
                     
-                    // 1. Unpack Code Optimization JSON
                     if (data.interaction_type === "code_optimization") {
                         formattedOutput += `🔍 RAW OCR EXTRACTION:\n----------------------\n${data.result.raw_ocr}\n\n`;
                         formattedOutput += `⚙️ MODEL OPTIMIZATION:\n----------------------\n${data.result.optimized_output}`;
-                    } 
-                    // 2. Unpack Vision Q&A JSON
-                    else if (data.interaction_type === "conversational_qa") {
+                    } else if (data.interaction_type === "conversational_qa") {
                         formattedOutput += `🗣️ YOUR QUESTION:\n----------------------\n${data.result.question}\n\n`;
                         formattedOutput += `👁️ VISION MODEL REPLY:\n----------------------\n${data.result.answer}`;
-                    } 
-                    // Fallback for safety
-                    else {
+                    } else {
                         formattedOutput += JSON.stringify(data.result, null, 2);
                     }
                     
