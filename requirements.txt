@@ -1,0 +1,23 @@
+# Web Server & API
+fastapi
+uvicorn
+python-multipart
+
+# Core Machine Learning
+torch
+torchvision
+torchaudio
+accelerate
+numpy
+
+# Natural Language & Audio Models
+transformers
+tokenizers
+huggingface-hub
+sentence-transformers
+openai-whisper
+
+# Vision & OCR Models
+easyocr
+Pillow
+einops

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevAI Suite - Master Control Center</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 850px; margin: 30px auto; padding: 20px; background: #f8f9fa; color: #333; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        h2 { margin-top: 0; color: #007bff; }
+        label { font-weight: bold; display: block; margin-top: 10px; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-family: monospace; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        button.recording { background: #dc3545; }
+        pre { 
+            background: #1e1e1e; 
+            color: #00ffcc; 
+            padding: 15px; 
+            border-radius: 5px; 
+            font-size: 13px; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            max-height: 500px; 
+            overflow-y: auto; 
+        }
+        .tabs { display: flex; justify-content: center; margin-bottom: 20px; gap: 8px; flex-wrap: wrap; }
+        .tab-btn { background: #e9ecef; color: #495057; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: #007bff; color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🚀 DevAI Suite</h1>
+        <p>Production-Grade Multi-Modal Machine Learning Platform</p>
+        <div class="tabs">
+            <button class="tab-btn active" type="button" onclick="switchTab('traffic', this)">📈 Traffic LSTM</button>
+            <button class="tab-btn" type="button" onclick="switchTab('audio', this)">🎙️ Audio Bug Triage</button>
+            <button class="tab-btn" type="button" onclick="switchTab('text', this)">💻 Code Optimizer</button>
+            <button class="tab-btn" type="button" onclick="switchTab('vision', this)">👁️ Vision & OCR Engine</button>
+        </div>
+    </div>
+
+    <!-- TRAFFIC ENGINE SECTION -->
+    <div id="traffic-section" class="section active card">
+        <h2>Numerical Traffic Forecasting</h2>
+        <p>Predict next-hour traffic conditions using your trained PyTorch LSTM model.</p>
+        
+        <label>Input Source Mode:</label>
+        <select id="trafficSource" onchange="toggleTrafficInput()">
+            <option value="api">Mock Live API Stream (144 automatic points)</option>
+            <option value="string">Paste Comma-Separated Values</option>
+        </select>
+
+        <div id="stringBox" style="display:none;">
+            <label>Paste 144+ Comma-Separated Numbers:</label>
+            <textarea id="pastedString" rows="4" placeholder="120.5, 122.1, 119.8..."></textarea>
+        </div>
+
+        <button type="button" onclick="runTrafficPrediction()">Run Traffic Prediction</button>
+        <h3>Result:</h3>
+        <pre id="trafficOutput">Click 'Run Traffic Prediction' to see inference...</pre>
+    </div>
+
+    <!-- AUDIO ENGINE SECTION -->
+    <div id="audio-section" class="section card">
+        <h2>Voice Bug Triage & Duplication Finder</h2>
+        <p>Record an issue description or upload an audio file to classify severity and check for duplicates.</p>
+        
+        <div style="margin-bottom: 20px;">
+            <button id="recordBtn" type="button" onclick="toggleRecording()">Start Microphone Recording</button>
+            <p id="recStatus" style="font-style: italic; color: #6c757d; margin-top: 5px;"></p>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <label>Or Upload Audio File (.wav / .mp3):</label>
+        <input type="file" id="audioFile" accept="audio/*">
+        <button type="button" onclick="uploadAudioFile()">Process Uploaded Audio</button>
+
+        <h3>Analysis Result:</h3>
+        <pre id="audioOutput">Record or upload audio to see triage results...</pre>
+    </div>
+
+    <!-- TEXT / CODE OPTIMIZATION ENGINE SECTION -->
+    <div id="text-section" class="section card">
+        <h2>Code Optimization & Generation</h2>
+        <p>Pass code snippets or instructions to your fine-tuned model for optimization.</p>
+        
+        <label>Code Prompt / Request:</label>
+        <textarea id="codePrompt" rows="6" placeholder="Write a Python function to parse JSON safely with exception handling..."></textarea>
+        
+        <button type="button" onclick="runCodeOptimization()">Optimize Code</button>
+        <h3>Generated Output:</h3>
+        <pre id="textOutput">Enter a prompt above to generate code...</pre>
+    </div>
+
+    <!-- VISION / OCR ENGINE SECTION -->
+    <div id="vision-section" class="section card">
+        <h2>Vision & OCR Intelligent Engine</h2>
+        <p>Upload a screenshot of code, system architecture diagram, or UI error. The engine will perform OCR, automatically route code to the optimizer, or answer your questions interactively.</p>
+        
+        <label>Upload Image (Screenshot / Diagram / Code):</label>
+        <input type="file" id="visionFile" accept="image/*">
+
+        <label>Ask a Question or Give Instructions about the Image:</label>
+        <textarea id="visionQuery" rows="3" placeholder="What is wrong with this code? Or explain this architecture diagram..."></textarea>
+        
+        <button type="button" onclick="runVisionAnalysis()">Analyze Image & Interact</button>
+        
+        <h3>Analysis & Routing Result:</h3>
+        <pre id="visionOutput">Upload an image and ask a question to begin...</pre>
+    </div>
+
+    <script>
+        function switchTab(tabName, btnElement) {
+        // 1. Hide all sections and remove active class from buttons
+        document.querySelectorAll('.section').forEach(function(s) {
+            s.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        
+        // 2. PASTE IT HERE: Activate the correct section based on the clicked tab
+        if (tabName === 'traffic') {
+            document.getElementById('traffic-section').classList.add('active');
+        } else if (tabName === 'audio') {
+            document.getElementById('audio-section').classList.add('active');
+        } else if (tabName === 'text') {
+            document.getElementById('text-section').classList.add('active');
+        } else if (tabName === 'vision') {
+            document.getElementById('vision-section').classList.add('active');
+        }
+        
+        // 3. Highlight the clicked tab button
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
+    }
+
+        function toggleTrafficInput() {
+            var val = document.getElementById('trafficSource').value;
+            document.getElementById('stringBox').style.display = (val === 'string') ? 'block' : 'none';
+        }
+
+        async function runTrafficPrediction() {
+            var source = document.getElementById('trafficSource').value;
+            var pastedStr = document.getElementById('pastedString').value;
+            var output = document.getElementById('trafficOutput');
+            
+            output.innerText = "Running PyTorch LSTM inference...";
+            var formData = new FormData();
+            formData.append("source", source);
+            if (source === 'string') {
+                formData.append("pasted_string", pastedStr);
+            }
+
+            try {
+                var res = await fetch('/api/predict-traffic', { method: 'POST', body: formData });
+                var data = await res.json();
+                output.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
+            }
+        }
+
+        var mediaRecorder;
+        var audioChunks = [];
+        var isRecording = false;
+
+        async function toggleRecording() {
+            var btn = document.getElementById('recordBtn');
+            var status = document.getElementById('recStatus');
+            var output = document.getElementById('audioOutput');
+
+            if (!isRecording) {
+                try {
+                    audioChunks = [];
+                    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = function(e) { audioChunks.push(e.data); };
+                    mediaRecorder.onstop = async function() {
+                        status.innerText = "Transcribing with Whisper & classifying with PyTorch...";
+                        var blob = new Blob(audioChunks, { type: 'audio/wav' });
+                        var formData = new FormData();
+                        formData.append("file", blob, "voice_bug.wav");
+                        
+                        var res = await fetch('/api/triage-bug', { method: 'POST', body: formData });
+                        var data = await res.json();
+                        output.innerText = JSON.stringify(data, null, 2);
+                        status.innerText = "Complete!";
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.innerText = "Stop Recording & Analyze";
+                    btn.classList.add("recording");
+                    status.innerText = "Recording audio...";
+                } catch (err) {
+                    alert("Microphone access denied or error: " + err.message);
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.innerText = "Start Microphone Recording";
+                btn.classList.remove("recording");
+            }
+        }
+
+        async function uploadAudioFile() {
+            var fileInput = document.getElementById('audioFile');
+            var output = document.getElementById('audioOutput');
+            if (fileInput.files.length === 0) { alert("Please select an audio file first."); return; }
+            
+            output.innerText = "Processing audio file...";
+            var formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                var res = await fetch('/api/triage-bug', { method: 'POST', body: formData });
+                var data = await res.json();
+                output.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
+            }
+        }
+
+        async function runCodeOptimization() {
+            var prompt = document.getElementById('codePrompt').value;
+            var output = document.getElementById('textOutput');
+            if (!prompt.trim()) { alert("Please enter a prompt."); return; }
+
+            output.innerText = "Generating optimized code and explanation...";
+            var formData = new FormData();
+            formData.append("prompt", prompt);
+
+            try {
+                var res = await fetch('/api/optimize-code', { method: 'POST', body: formData });
+                var data = await res.json();
+                
+                if (data.optimized_output) {
+                    var cleanText = data.optimized_output
+                        .replace(/\\r\\n/g, '\n')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\t/g, '\t');
+                    output.innerText = cleanText;
+                } else {
+                    output.innerText = JSON.stringify(data, null, 2);
+                }
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
+            }
+        }
+
+        async function runVisionAnalysis() {
+            var fileInput = document.getElementById('visionFile');
+            var queryInput = document.getElementById('visionQuery').value;
+            var output = document.getElementById('visionOutput');
+            
+            if (fileInput.files.length === 0) { 
+                alert("Please select an image file first."); 
+                return; 
+            }
+            
+            output.innerText = "Processing image through Vision & OCR engine (this may take a minute on CPU)...";
+            var formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("query", queryInput || "Analyze this image.");
+
+            try {
+                var res = await fetch('/api/process-image', { method: 'POST', body: formData });
+                var data = await res.json();
+                
+                if (data.status === "success") {
+                    let formattedOutput = `[Routed To: ${data.routed_to} | Mode: ${data.interaction_type}]\n\n`;
+                    
+                    // 1. Unpack Code Optimization JSON
+                    if (data.interaction_type === "code_optimization") {
+                        formattedOutput += `🔍 RAW OCR EXTRACTION:\n----------------------\n${data.result.raw_ocr}\n\n`;
+                        formattedOutput += `⚙️ MODEL OPTIMIZATION:\n----------------------\n${data.result.optimized_output}`;
+                    } 
+                    // 2. Unpack Vision Q&A JSON
+                    else if (data.interaction_type === "conversational_qa") {
+                        formattedOutput += `🗣️ YOUR QUESTION:\n----------------------\n${data.result.question}\n\n`;
+                        formattedOutput += `👁️ VISION MODEL REPLY:\n----------------------\n${data.result.answer}`;
+                    } 
+                    // Fallback for safety
+                    else {
+                        formattedOutput += JSON.stringify(data.result, null, 2);
+                    }
+                    
+                    output.innerText = formattedOutput;
+                } else {
+                    output.innerText = `Error: ${data.message || JSON.stringify(data)}`;
+                }
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
